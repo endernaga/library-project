@@ -14,10 +14,10 @@ class PaymentRequired(models.Model):
         FINE = "FINE"
 
     status = models.CharField(
-        max_length=50, choices=StatusChoices, default=StatusChoices.PENDING
+        max_length=50, choices=StatusChoices.choices, default=StatusChoices.PENDING
     )
     type = models.CharField(
-        max_length=50, choices=TypeChoices, default=TypeChoices.PAYMENT
+        max_length=50, choices=TypeChoices.choices, default=TypeChoices.PAYMENT
     )
     borrow = models.ForeignKey(Borrowing, on_delete=models.CASCADE)
     session_url = models.URLField(max_length=511)

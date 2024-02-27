@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken",
     "drf_spectacular",
+    "django_celery_results",
+    "django_celery_beat",
 ]
 
 MIDDLEWARE = [
@@ -149,4 +151,15 @@ REST_FRAMEWORK = {
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
-APPEND_SLASH=False
+APPEND_SLASH = False
+
+# Celery Configuration Options
+CELERY_BROKER_URL = "redis://localhost:6379"
+CELERY_RESULT_BACKEND = "redis://localhost:6379"
+CELERY_TIMEZONE = "Europe/Kyiv"
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60
+
+# Telegram bot settings
+TELEGRAM_BOT_API = os.getenv("TELEGRAM_BOT_API")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")

@@ -1,6 +1,6 @@
 import stripe
 from django.db import transaction
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.authentication import TokenAuthentication
@@ -17,6 +17,7 @@ from borrowing_service.serializers import (
     PostSerializer,
 )
 from library import settings
+from notifications_service.tasks import new_borrowing_created
 from payment_service.models import PaymentRequired
 
 
@@ -55,7 +56,14 @@ class BorrowingViewSet(viewsets.ModelViewSet):
             if book.inventory > 0:
                 book.inventory -= 1
                 book.save()
-            return super().create(request, *args, **kwargs)
+            serializer = self.get_serializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            headers = self.get_success_headers(serializer.data)
+            new_borrowing_created(serializer.data["id"])
+            return Response(
+                serializer.data, status=status.HTTP_201_CREATED, headers=headers
+            )
 
     @action(
         methods=["POST"],
@@ -73,7 +81,11 @@ class BorrowingViewSet(viewsets.ModelViewSet):
                 )
             borrow.actual_return = timezone.now().date()
 
-            type = "PAYMENT" if borrow.actual_return < borrow.expected_return_date else "FINE"
+            type = (
+                "PAYMENT"
+                if borrow.actual_return < borrow.expected_return_date
+                else "FINE"
+            )
 
             book = Book.objects.get(pk=borrow.book.pk)
             book.inventory += 1
@@ -97,9 +109,13 @@ class BorrowingViewSet(viewsets.ModelViewSet):
                 ],
                 mode="payment",
                 success_url=domen
-                + redirect("payment_service:paymentrequired-success", pk=self.get_object().pk).url,
+                + redirect(
+                    "payment_service:paymentrequired-success", pk=self.get_object().pk
+                ).url,
                 cancel_url=domen
-                + redirect("payment_service:paymentrequired-cancel", pk=self.get_object().pk).url,
+                + redirect(
+                    "payment_service:paymentrequired-cancel", pk=self.get_object().pk
+                ).url,
             )
 
             PaymentRequired.objects.create(
@@ -109,7 +125,6 @@ class BorrowingViewSet(viewsets.ModelViewSet):
                 session_id=checkout_session.id,
                 money_to_paid=days * borrow.book.daily_fee,
             )
-
             borrow.save()
             book.save()
         return Response(

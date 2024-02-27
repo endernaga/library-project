@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from library import settings
+from notifications_service.tasks import successful_payment
 from payment_service.models import PaymentRequired
 from payment_service.serializers import PaymentSerializer
 from rest_framework import mixins, viewsets, status
@@ -29,11 +30,13 @@ def my_webhook_view(request):
         return Response({"success": "false"}, status=status.HTTP_400_BAD_REQUEST)
 
     if event and event["type"] == "checkout.session.completed":
+        session_id = event.get("data").get("object").get("id")
         payment = PaymentRequired.objects.get(
-            session_id=event.get("data").get("object").get("id")
+            session_id=session_id
         )
         payment.status = "PAID"
         payment.save()
+        successful_payment(session_id)
         # Then define and call a method to handle the successful payment intent.
         # handle_payment_intent_succeeded(payment_intent)
     elif event["type"] == "payment_method.attached":
@@ -72,12 +75,14 @@ class CreatePayment(
     )
     def cancel(self, request, *args, **kwargs):
         stripe.api_key = settings.STRIPE_SECRET_KEY
-        session = stripe.checkout.Session.retrieve(
-            self.get_object().session_id
+        session = stripe.checkout.Session.retrieve(self.get_object().session_id)
+        error = stripe.PaymentIntent.retrieve(session.get("payment_intent")).get(
+            "last_payment_error"
         )
-        error = stripe.PaymentIntent.retrieve(session.get("payment_intent")).get("last_payment_error")
         if error:
             return Response(
                 data={"success": False, "error": error.type}, status=status.HTTP_200_OK
             )
-        return redirect("payment_service:paymentrequired-success", pk=self.get_object().pk)
+        return redirect(
+            "payment_service:paymentrequired-success", pk=self.get_object().pk
+        )
