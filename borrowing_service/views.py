@@ -5,6 +5,7 @@ from django.utils import timezone
 from rest_framework import viewsets, status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -21,11 +22,18 @@ from notifications_service.tasks import new_borrowing_created
 from payment_service.models import PaymentRequired
 
 
+class StandardResultsSetPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 10
+
+
 class BorrowingViewSet(viewsets.ModelViewSet):
     queryset = Borrowing.objects.all()
     serializer_class = BorrowingSerializer
     authentication_classes = (TokenAuthentication, JWTAuthentication)
     permission_classes = (IsAuthenticated,)
+    pagination_class = StandardResultsSetPagination
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
@@ -107,7 +115,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
                     {
                         "price_data": {
                             "currency": "eur",
-                            "unit_amount": payment_amount * 100,
+                            "unit_amount": int(payment_amount) * 100,
                             "product_data": {"name": str(borrow)},
                         },
                         "quantity": 1,

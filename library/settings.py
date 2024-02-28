@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-r78dzumb3_-%je3gl#99%tu)qe56%b+icvifxyf35#y3-ygv5m"
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-r78dzumb3_-%je3gl#99%tu)qe56%b+icvifxyf35#y3-ygv5m")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -148,6 +148,20 @@ REST_FRAMEWORK = {
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
 }
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Library Project API',
+    'DESCRIPTION': 'Library API',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "defaultModelRendering": "model",
+        "defaultModelsExpandDepth": 2,
+        "defaultModelExpandDepth": 2,
+    }
+}
+
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
 STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
