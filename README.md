@@ -31,7 +31,7 @@ Here's a brief intro about what a developer must do in order to start developing
 the project further:
 
 ```shell
-$ git clone #
+$ git clone https://github.com/endernaga/library-project.git
 $ docker run -d -p 6379:6379 redis
 ```
 
