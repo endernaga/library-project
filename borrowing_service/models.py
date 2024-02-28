@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.urls import reverse
 
 from book_service.models import Book
 
@@ -19,6 +20,11 @@ class Borrowing(models.Model):
         book = self.cleaned_data["book"]
         self.validate_book_data(book, ValidationError)
         return book
+
+    @property
+    def get_return_url(self):
+        return reverse("borrowing_service:borrowing-return-book", kwargs={"pk": self.pk})
+
 
     @staticmethod
     def validate_book_data(book, error_to_raise):

@@ -44,7 +44,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
         return queryset
 
     def get_serializer_class(self):
-        if self.action == "create":
+        if self.action in ("create", "retrive"):
             return BorrowingSerializer
         if self.action == "return_book":
             return PostSerializer
@@ -95,13 +95,19 @@ class BorrowingViewSet(viewsets.ModelViewSet):
 
             days = (borrow.actual_return - borrow.borrowing_date).days
 
+            payment_amount = (
+                days * borrow.book.daily_fee
+                if type == "PAYMENT"
+                else days * borrow.book.daily_fee * settings.FINE_MULTIPLIER
+            )
+
             checkout_session = stripe.checkout.Session.create(
                 payment_method_types=["card"],
                 line_items=[
                     {
                         "price_data": {
                             "currency": "eur",
-                            "unit_amount": int(days * borrow.book.daily_fee + 50) * 100,
+                            "unit_amount": payment_amount * 100,
                             "product_data": {"name": str(borrow)},
                         },
                         "quantity": 1,
@@ -123,7 +129,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
                 borrow=borrow,
                 session_url=checkout_session.url,
                 session_id=checkout_session.id,
-                money_to_paid=days * borrow.book.daily_fee,
+                money_to_paid=payment_amount,
             )
             borrow.save()
             book.save()
