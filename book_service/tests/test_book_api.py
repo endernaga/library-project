@@ -69,6 +69,7 @@ class AuthenticatedBookApiTest(TestCase):
         )
         self.assertEqual(page.status_code, 403)
 
+
 class AdminBookApiTest(TestCase):
     def setUp(self) -> None:
         self.client = APIClient()
@@ -77,7 +78,7 @@ class AdminBookApiTest(TestCase):
         )
         self.client.force_authenticate(user)
 
-    def test_cancel_create_book(self):
+    def test_create_book(self):
         page = self.client.post(
             BOOK_URL,
             {

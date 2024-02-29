@@ -85,7 +85,7 @@ class BorrowingViewSet(viewsets.ModelViewSet):
             if borrow.actual_return:
                 return Response(
                     data={"return": "This borrow already returned"},
-                    status=status.HTTP_202_ACCEPTED,
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
             borrow.actual_return = timezone.now().date()
 
