@@ -14,7 +14,7 @@ $ python manage.py migrate
 $ docker run -d -p 6379:6379 redis  
 $ stripe listen --forward-to localhost:8000/api/payments/webhooks
 $ celery -A library worker --loglevel=INFO --without-gossip --without-mingle --without-heartbeat -Ofair --pool=solo
-$ celery -A proj beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
+$ celery -A library beat -l INFO --scheduler django_celery_beat.schedulers:DatabaseScheduler
 $ python manage.py runserver
 ```
 
